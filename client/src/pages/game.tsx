@@ -107,14 +107,14 @@ export default function GamePage() {
             <div className="flex mb-4 gap-1">
               <Button
                 className={`pixel-button pixel-border px-4 py-2 text-xs ${
-                  state.currentView === 'explore' 
-                    ? 'bg-accent text-accent-foreground' 
+                  state.currentView === 'explore'
+                    ? 'bg-accent text-accent-foreground'
                     : 'bg-primary text-primary-foreground'
                 }`}
                 onClick={() => dispatch({ type: 'SET_VIEW', payload: 'explore' })}
                 data-testid="button-explore-tab"
               >
-                EXPLORE
+                ENEMIES
               </Button>
               <Button
                 className={`pixel-button pixel-border px-4 py-2 text-xs ${
@@ -141,7 +141,11 @@ export default function GamePage() {
             </div>
 
             {/* View Content */}
-            {state.currentView === 'explore' && <WorldMap />}
+            {state.currentView === 'explore' && (
+              <div className="grid md:grid-cols-1 gap-4">
+                <WorldMap />
+              </div>
+            )}
             {state.currentView === 'combat' && (
               <div className="text-center text-xs py-8">
                 Combat view - switch to right panel for combat controls
@@ -157,7 +161,7 @@ export default function GamePage() {
           {/* Right Panel - Combat and Quest Info */}
           <aside style={{ gridArea: 'right-panel' }} className="space-y-2">
             <CombatPanel />
-            {character.currentLocationId === 'village_shop' && <ShopPanel />}
+            {(['village_shop','dark_forest_shop','ruins_shop','forest','ruins'].includes(character.currentLocationId)) && <ShopPanel />}
             {/* Quest Panel Placeholder */}
             <div className="pixel-border bg-card p-3">
               <h2 className="text-accent text-xs mb-3">ACTIVE QUESTS</h2>

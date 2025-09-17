@@ -61,6 +61,7 @@ export class MemStorage implements IStorage {
   private combatSessions: Map<string, CombatSession>;
   private items: Map<string, Item>;
   private shopInventories: Map<string, string[]>; // locationId -> item ids
+  private explorationCooldowns: Map<string, number>;
 
   constructor() {
     this.characters = new Map();
@@ -70,7 +71,9 @@ export class MemStorage implements IStorage {
     this.enemies = new Map();
     this.combatSessions = new Map();
     this.items = new Map();
-  this.shopInventories = new Map();
+    this.shopInventories = new Map();
+    // Exploration cooldowns: characterId -> nextAllowedEpochMs
+    this.explorationCooldowns = new Map<string, number>();
     
     this.initializeGameData();
   }
@@ -119,6 +122,16 @@ export class MemStorage implements IStorage {
         accessible: true
       },
       {
+        id: "dark_forest_shop",
+        name: "Dark Forest Shop",
+        description: "An outpost trading in forest spoils",
+        levelRecommendation: 5,
+        x: 280,
+        y: 240,
+        icon: "🛒",
+        accessible: true
+      },
+      {
         id: "ruins",
         name: "Ancient Ruins",
         description: "Crumbling structures hiding ancient secrets",
@@ -126,6 +139,17 @@ export class MemStorage implements IStorage {
         x: 400,
         y: 120,
         icon: "🏛️",
+        accessible: true
+      }
+      ,
+      {
+        id: "ruins_shop",
+        name: "Ruins Camp",
+        description: "An expedition camp trading ancient relics",
+        levelRecommendation: 15,
+        x: 440,
+        y: 160,
+        icon: "🛒",
         accessible: true
       }
     ];
@@ -237,8 +261,13 @@ export class MemStorage implements IStorage {
 
   // Define per-location shop inventories (basic example)
   this.shopInventories.set('village_shop', ['wooden_sword', 'sword', 'shield', 'health_potion']);
-  this.shopInventories.set('forest', ['sword', 'steel_sword', 'iron_shield', 'health_potion', 'herb']);
-  this.shopInventories.set('ruins', ['steel_sword', 'steel_shield', 'magic_scroll', 'health_potion']);
+  const forestInventory = ['sword', 'steel_sword', 'iron_shield', 'health_potion', 'herb'];
+  const ruinsInventory = ['steel_sword', 'steel_shield', 'magic_scroll', 'health_potion'];
+  this.shopInventories.set('dark_forest_shop', forestInventory);
+  this.shopInventories.set('ruins_shop', ruinsInventory);
+  // Also allow shopping directly in combat areas if player expects it
+  this.shopInventories.set('forest', forestInventory);
+  this.shopInventories.set('ruins', ruinsInventory);
 
     // Initialize enemies
     const enemies: Enemy[] = [
@@ -256,7 +285,7 @@ export class MemStorage implements IStorage {
       {
         id: "goblin",
         name: "Forest Goblin",
-        health: 45,
+        health: 70,
         attack: 8,
         defense: 2,
         experience: 25,
@@ -415,6 +444,18 @@ export class MemStorage implements IStorage {
 
   async getEnemiesByLocation(locationId: string): Promise<Enemy[]> {
     return Array.from(this.enemies.values()).filter(enemy => enemy.locationId === locationId);
+  }
+
+  async getAllEnemies(): Promise<Enemy[]> {
+    return Array.from(this.enemies.values());
+  }
+
+  getExploreCooldown(characterId: string): number {
+    return this.explorationCooldowns.get(characterId) || 0;
+  }
+
+  setExploreCooldown(characterId: string, until: number) {
+    this.explorationCooldowns.set(characterId, until);
   }
 
   // Combat operations

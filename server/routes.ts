@@ -78,6 +78,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const character = await storage.updateCharacter(req.params.id, { 
         currentLocationId: locationId 
       });
+
       res.json(character);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
@@ -515,6 +516,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual equip route (drag-drop from client)
+  app.post('/api/characters/:id/equip', async (req, res) => {
+    try {
+      const { itemId, slot } = equipItemSchema.parse(req.body);
+      const character = await storage.getCharacter(req.params.id);
+      if (!character) return res.status(404).json({ message: 'Character not found' });
+      const item = await storage.getItem(itemId);
+      if (!item) return res.status(404).json({ message: 'Item not found' });
+      // Validate slot compatibility
+      const slotToType: Record<string, string> = {
+        weapon: 'weapon',
+        armor: 'armor',
+        helmet: 'helmet',
+        boots: 'boots',
+        accessory: 'accessory'
+      };
+      const expectedType = slotToType[slot];
+      if (!expectedType) return res.status(400).json({ message: 'Invalid slot' });
+      if (item.type !== expectedType) {
+        return res.status(400).json({ message: `Cannot equip ${item.type} into ${slot}` });
+      }
+      // Ensure item exists in inventory
+      const invItem = character.inventory?.find(i => i.id === itemId);
+      if (!invItem) return res.status(400).json({ message: 'Item not in inventory' });
+      const newEquipment = { ...(character.equipment as any), [slot]: itemId };
+      const updated = await storage.updateCharacter(character.id, { equipment: newEquipment });
+      return res.json({ character: updated, message: `Equipped ${item.name}` });
+    } catch (error: any) {
+      return res.status(400).json({ message: error.message });
+    }
+  });
+
   // Enemy routes
   app.get("/api/enemies/:id", async (req, res) => {
     try {
@@ -532,6 +565,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const enemies = await storage.getEnemiesByLocation(req.params.locationId);
       res.json(enemies);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Exploration: return a random list (2-7) of enemies available in current location context including training grounds enemy
+  app.post('/api/characters/:id/explore', async (req, res) => {
+    try {
+      const character = await storage.getCharacter(req.params.id);
+      if (!character) return res.status(404).json({ message: 'Character not found' });
+      const now = Date.now();
+      const nextAllowed = storage.getExploreCooldown(character.id);
+      if (now < nextAllowed) {
+        return res.status(429).json({ message: 'Explore on cooldown', retryAt: nextAllowed });
+      }
+      // Determine base pool: enemies in current location + always include training dummy if exists
+      const locationEnemies = await storage.getEnemiesByLocation(character.currentLocationId);
+      const allEnemies = await storage.getAllEnemies();
+      const dummy = allEnemies.find(e => e.id === 'training_dummy');
+      const poolMap: Record<string, any> = {};
+      for (const e of locationEnemies) poolMap[e.id] = e;
+      if (dummy) poolMap[dummy.id] = dummy;
+      const pool = Object.values(poolMap);
+      if (pool.length === 0) return res.json({ enemies: [], cooldownMs: 0 });
+      const count = 2 + Math.floor(Math.random() * 6); // 2-7
+      const shuffled = pool.sort(() => Math.random() - 0.5);
+      const selection = shuffled.slice(0, Math.min(count, shuffled.length));
+      // Set cooldown (e.g., 5 seconds)
+      const cooldownMs = 5000;
+      storage.setExploreCooldown(character.id, now + cooldownMs);
+      res.json({ enemies: selection, cooldownMs, nextAllowed: now + cooldownMs });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

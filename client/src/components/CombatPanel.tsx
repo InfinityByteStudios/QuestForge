@@ -143,7 +143,14 @@ export function CombatPanel() {
     );
   }
 
-  const enemyHealthPercent = (combat.enemyHealth / enemy.health) * 100;
+  // Adjust displayed max health for training dummy since server scales starting health dynamically
+  let displayedEnemyMaxHealth = enemy.health;
+  if (enemy.id === 'training_dummy' && character) {
+    // Mirror server logic: 30 + (level-1)*10 capped at 30 + 10*20
+    const scaled = 30 + (character.level - 1) * 10;
+    displayedEnemyMaxHealth = Math.min(scaled, 30 + 10 * 20);
+  }
+  const enemyHealthPercent = (combat.enemyHealth / displayedEnemyMaxHealth) * 100;
 
   return (
     <div className="pixel-border bg-card p-3">
@@ -207,7 +214,7 @@ export function CombatPanel() {
         <div className="text-xs text-center">
           <div className="font-bold" data-testid="text-enemy-name">{enemy.name}</div>
           <div className="text-destructive" data-testid="text-enemy-health">
-            HP: {combat.enemyHealth}/{enemy.health}
+            HP: {combat.enemyHealth}/{displayedEnemyMaxHealth}
           </div>
           <div className="pixel-border bg-background h-2 mt-1">
             <div 

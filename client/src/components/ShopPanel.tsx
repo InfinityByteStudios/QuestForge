@@ -41,9 +41,18 @@ export function ShopPanel() {
 
   if (!character) return null;
 
+  const locationNames: Record<string,string> = {
+    village_shop: 'Village Shop',
+    dark_forest_shop: 'Dark Forest Shop',
+    ruins_shop: 'Ancient Ruins Shop',
+    forest: 'Dark Forest Shop',
+    ruins: 'Ancient Ruins Shop'
+  };
+  const title = locationNames[currentLocationId || ''] || 'Shop';
+
   return (
     <div className="pixel-border bg-card p-3">
-      <h2 className="text-accent text-xs mb-3">VILLAGE SHOP</h2>
+      <h2 className="text-accent text-xs mb-3">{title.toUpperCase()}</h2>
       <div className="text-[10px] mb-2">Gold: <span className="text-accent font-bold">{character.gold}</span></div>
       <div className="space-y-2 max-h-48 overflow-auto pr-1">
   {items.map(item => (

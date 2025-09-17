@@ -8,6 +8,12 @@
   command = "npm run build"
   publish = "dist"
 
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  # You can add external_node_modules if some deps should not be bundled
+  # external_node_modules = ["some-big-lib"]
+
 [build.environment]
   NODE_VERSION = "20"
   # If you later need to force production mode during build uncomment below:
@@ -15,9 +21,14 @@
 
 # SPA fallback so client-side routing works (wouter / React router style)
 [[redirects]]
+  from = "/api/hello"
+  to = "/.netlify/functions/hello"
+  status = 200
+
+[[redirects]]
   from = "/api/*"
-  to = "/api-not-configured"
-  status = 404
+  to = "/.netlify/functions/:splat"
+  status = 200
   force = true
 
 [[redirects]]
