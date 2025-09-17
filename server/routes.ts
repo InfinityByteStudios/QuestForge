@@ -130,26 +130,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (enemy.id !== 'training_dummy') {
         const now = Date.now();
         if (combat.nextEnemyAttackAt && now >= combat.nextEnemyAttackAt && combat.active) {
-          // Perform an auto-attack using similar (but slightly reduced) formula
-          const characterLevelFactor = Math.floor(character.level * 0.25);
+          // Re-fetch latest session to avoid race with victory/deletion
+          const latest = await storage.getCombatSession(req.params.id);
+          if (!latest || !latest.active) {
+            // Session ended or deactivated; return current state
+            const updated = await storage.getCombatSession(req.params.id);
+            return res.json(updated || null);
+          }
+          // Ensure enemy still "alive" in session
+          if ((latest as any).enemyHealth !== undefined && (latest as any).enemyHealth <= 0) {
+            return res.json(latest);
+          }
+
+          // Perform an auto-attack with slightly lower average damage
+          const characterLevelFactor = Math.floor(character.level * 0.2);
           const randComponent = Math.floor(Math.random() * Math.max(4, Math.ceil(enemy.attack * 0.5)));
-          const raw = (enemy.attack * 0.75) + randComponent + characterLevelFactor;
-          const defenseMitigation = Math.floor(character.defense * 0.35);
+          const raw = (enemy.attack * 0.7) + randComponent + characterLevelFactor;
+          const defenseMitigation = Math.floor(character.defense * 0.5);
           const computed = Math.max(1, Math.floor(raw - defenseMitigation));
           const newHealth = Math.max(0, character.health - computed);
           await storage.updateCharacter(character.id, { health: newHealth });
 
-          // Schedule next attack between 2.5s - 4s
-          const nextIn = 2500 + Math.floor(Math.random() * 1500);
-          await storage.updateCombatSession(combat.id, {
-            lastEnemyAttackAt: now,
-            lastEnemyAttackDamage: computed,
-            nextEnemyAttackAt: now + nextIn
-          });
+          // Schedule next attack between 3.5s - 6s for less drain
+          const nextIn = 3500 + Math.floor(Math.random() * 2500);
+          try {
+            await storage.updateCombatSession(latest.id, {
+              lastEnemyAttackAt: now,
+              lastEnemyAttackDamage: computed,
+              nextEnemyAttackAt: now + nextIn
+            });
+          } catch {
+            // Session might have been removed concurrently; ignore
+            return res.json(null);
+          }
 
           // If character dies, end combat
           if (newHealth <= 0) {
-            await storage.deleteCombatSession(combat.id);
+            await storage.deleteCombatSession(latest.id);
             return res.json({
               message: "You have been defeated!",
               defeated: true
@@ -245,6 +262,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (newEnemyHealth <= 0) {
         // Enemy defeated
+        // Deactivate session first to prevent race with auto-attack pollers
+        try {
+          await storage.updateCombatSession(combat.id, { active: false, enemyHealth: newEnemyHealth });
+        } catch {}
         await storage.deleteCombatSession(combat.id);
         const newExp = character.experience + enemy.experience;
         let newGold = character.gold + enemy.gold;

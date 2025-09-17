@@ -285,7 +285,7 @@ export class MemStorage implements IStorage {
       {
         id: "goblin",
         name: "Forest Goblin",
-        health: 70,
+        health: 90,
         attack: 8,
         defense: 2,
         experience: 25,
@@ -296,7 +296,7 @@ export class MemStorage implements IStorage {
       {
         id: "skeleton",
         name: "Ancient Skeleton",
-        health: 60,
+        health: 100,
         attack: 12,
         defense: 5,
         experience: 50,

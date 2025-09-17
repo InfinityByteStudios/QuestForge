@@ -10,6 +10,7 @@ import { ShopPanel } from '@/components/ShopPanel';
 import { Inventory } from '@/components/Inventory';
 import { ActionLog } from '@/components/ActionLog';
 import { Button } from '@/components/ui/button';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function GamePage() {
   const { state, dispatch, addToActionLog } = useGame();
@@ -29,20 +30,136 @@ export default function GamePage() {
     enabled: !!state.characterId
   });
 
+  // Auto-save: persist the last-used character id every 30 seconds
+  useEffect(() => {
+    if (!state.characterId) return;
+    const interval = setInterval(() => {
+      try {
+        localStorage.setItem('adventureQuestCharacter', state.characterId!);
+        if (character) {
+          // Persist a snapshot for rebuilds (serverless cold starts)
+          localStorage.setItem('adventureQuestCharacterSnapshot', JSON.stringify(character));
+        }
+      } catch {}
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [state.characterId, character]);
+
   const handleSave = () => {
     if (state.characterId) {
       localStorage.setItem('adventureQuestCharacter', state.characterId);
+      if (character) {
+        localStorage.setItem('adventureQuestCharacterSnapshot', JSON.stringify(character));
+      }
       addToActionLog('Game saved!', 'success');
     }
   };
 
-  const handleLoad = () => {
+  const handleLoad = async () => {
     const savedCharacterId = localStorage.getItem('adventureQuestCharacter');
-    if (savedCharacterId) {
-      dispatch({ type: 'SET_CHARACTER_ID', payload: savedCharacterId });
-      addToActionLog('Game loaded!', 'success');
-    } else {
+    if (!savedCharacterId) {
       addToActionLog('No saved game found!', 'error');
+      return;
+    }
+    // First, verify the character still exists server-side
+    try {
+      const resp = await apiRequest('GET', `/api/characters/${savedCharacterId}`);
+      if (resp.ok) {
+        dispatch({ type: 'SET_CHARACTER_ID', payload: savedCharacterId });
+        addToActionLog('Game loaded!', 'success');
+        return;
+      }
+      // If missing (404), attempt restore from snapshot
+      if (resp.status === 404) {
+        const snapStr = localStorage.getItem('adventureQuestCharacterSnapshot');
+        if (!snapStr) {
+          addToActionLog('Save not found on server and no snapshot to restore.', 'error');
+          return;
+        }
+        const snap = JSON.parse(snapStr) as Partial<Character>;
+        if (!snap.name || !snap.class) {
+          addToActionLog('Snapshot incomplete; cannot restore.', 'error');
+          return;
+        }
+        // Recreate with core stats (inventory/equipment will be patched next)
+        const baseInsert: any = {
+          name: snap.name,
+          class: snap.class,
+          level: snap.level ?? 1,
+          experience: snap.experience ?? 0,
+          health: snap.health ?? 100,
+          maxHealth: snap.maxHealth ?? 100,
+          strength: snap.strength ?? 10,
+          magic: snap.magic ?? 10,
+          agility: snap.agility ?? 10,
+          defense: snap.defense ?? 10,
+          gold: snap.gold ?? 50,
+          unspentPoints: (snap as any).unspentPoints ?? 0,
+          currentLocationId: snap.currentLocationId ?? 'village',
+          equipment: snap.equipment ?? {}
+        };
+        const createResp = await apiRequest('POST', `/api/characters`, baseInsert);
+        if (!createResp.ok) {
+          addToActionLog('Failed to recreate character from snapshot.', 'error');
+          return;
+        }
+        const created = await createResp.json();
+        // Patch inventory/equipment in case create used defaults
+        const patch: any = {};
+        if (snap.inventory) patch.inventory = snap.inventory;
+        if (snap.equipment) patch.equipment = snap.equipment as any;
+        if (Object.keys(patch).length > 0) {
+          await apiRequest('PATCH', `/api/characters/${created.id}`, patch);
+        }
+        // Persist new id and load
+        localStorage.setItem('adventureQuestCharacter', created.id);
+        dispatch({ type: 'SET_CHARACTER_ID', payload: created.id });
+        addToActionLog('Game restored from snapshot!', 'success');
+        return;
+      }
+    } catch (e) {
+      // Network or other error; try snapshot regardless
+      const snapStr = localStorage.getItem('adventureQuestCharacterSnapshot');
+      if (!snapStr) {
+        addToActionLog('Load failed and no snapshot available.', 'error');
+        return;
+      }
+      const snap = JSON.parse(snapStr) as Partial<Character>;
+      if (!snap.name || !snap.class) {
+        addToActionLog('Snapshot incomplete; cannot restore.', 'error');
+        return;
+      }
+      const baseInsert: any = {
+        name: snap.name,
+        class: snap.class,
+        level: snap.level ?? 1,
+        experience: snap.experience ?? 0,
+        health: snap.health ?? 100,
+        maxHealth: snap.maxHealth ?? 100,
+        strength: snap.strength ?? 10,
+        magic: snap.magic ?? 10,
+        agility: snap.agility ?? 10,
+        defense: snap.defense ?? 10,
+        gold: snap.gold ?? 50,
+        unspentPoints: (snap as any).unspentPoints ?? 0,
+        currentLocationId: snap.currentLocationId ?? 'village',
+        equipment: snap.equipment ?? {}
+      };
+      const createResp = await apiRequest('POST', `/api/characters`, baseInsert);
+      if (!createResp.ok) {
+        addToActionLog('Failed to recreate character from snapshot.', 'error');
+        return;
+      }
+      const created = await createResp.json();
+      const patch: any = {};
+      if (snap.inventory) patch.inventory = snap.inventory;
+      if (snap.equipment) patch.equipment = snap.equipment as any;
+      if (Object.keys(patch).length > 0) {
+        await apiRequest('PATCH', `/api/characters/${created.id}`, patch);
+      }
+      localStorage.setItem('adventureQuestCharacter', created.id);
+      dispatch({ type: 'SET_CHARACTER_ID', payload: created.id });
+      addToActionLog('Game restored from snapshot!', 'success');
     }
   };
 
