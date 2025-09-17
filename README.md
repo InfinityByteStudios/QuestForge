@@ -75,6 +75,18 @@ Pushing to the connected Git repository triggers Netlify build:
 2. Executes `npm run build` (bundles client) and builds functions.
 3. Deploys static assets & functions. Functions are available under `/.netlify/functions/<name>`.
 
+### Serverless API Wrapper
+All Express API routes are now also exposed through a single Netlify Function `api` (file: `netlify/functions/api.ts`). Redirects route `/api/*` to that function. Caveats:
+- In-memory storage resets on cold starts (character progress not persisted between cold containers).
+- High-frequency combat polling may create more cold starts; consider batching or migrating to a persistent DB.
+- For production persistence, replace `storage` with a real database (Drizzle schema in `shared/` can be leveraged).
+
+Local test:
+```
+netlify dev
+# then hit http://localhost:8888/api/locations
+```
+
 ### Roadmap for Full Migration
 Currently the Express server remains separate (not deployed to Netlify). To migrate:
 - Port each REST endpoint to its own function.

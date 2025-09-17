@@ -21,13 +21,8 @@
 
 # SPA fallback so client-side routing works (wouter / React router style)
 [[redirects]]
-  from = "/api/hello"
-  to = "/.netlify/functions/hello"
-  status = 200
-
-[[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  to = "/.netlify/functions/api"
   status = 200
   force = true
 
