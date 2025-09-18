@@ -47,7 +47,7 @@ export interface Quest {
   id: string;
   title: string;
   description: string;
-  type: string; // "kill", "collect", "talk"
+  type: string;
   target: string;
   targetAmount: number;
   reward: {
@@ -84,17 +84,17 @@ export interface CombatSession {
   characterId: string;
   enemyId: string;
   enemyHealth: number;
-  turn: string; // "player" | "enemy"
+  turn: string;
   active: boolean;
-  nextEnemyAttackAt?: number; // epoch ms when enemy can next auto-attack
-  lastEnemyAttackAt?: number;  // epoch ms of last auto-attack
-  lastEnemyAttackDamage?: number; // damage dealt last auto attack
+  nextEnemyAttackAt?: number;
+  lastEnemyAttackAt?: number;
+  lastEnemyAttackDamage?: number;
 }
 
 export interface Item {
   id: string;
   name: string;
-  type: string; // "weapon", "armor", "consumable", "misc"
+  type: string;
   icon: string;
   description: string;
   stats: {
@@ -107,7 +107,7 @@ export interface Item {
   sellValue: number;
 }
 
-// Insert types (for creating new entities)
+// Insert types
 export type InsertCharacter = Omit<Character, 'id'>;
 export type InsertLocation = Location;
 export type InsertQuest = Quest;
@@ -116,7 +116,7 @@ export type InsertEnemy = Enemy;
 export type InsertCombatSession = Omit<CombatSession, 'id'>;
 export type InsertItem = Item;
 
-// Zod schemas for validation
+// Validation schemas
 export const insertCharacterSchema = z.object({
   name: z.string(),
   class: z.string(),
@@ -163,5 +163,3 @@ export const equipItemSchema = z.object({
   itemId: z.string(),
   slot: z.enum(["weapon", "armor", "helmet", "boots", "accessory"]),
 });
-
-
