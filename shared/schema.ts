@@ -116,6 +116,54 @@ export type InsertEnemy = Enemy;
 export type InsertCombatSession = Omit<CombatSession, 'id'>;
 export type InsertItem = Item;
 
+// Zod schemas for validation
+export const insertCharacterSchema = z.object({
+  name: z.string(),
+  class: z.string(),
+  level: z.number().optional(),
+  experience: z.number().optional(),
+  health: z.number().optional(),
+  maxHealth: z.number().optional(),
+  strength: z.number().optional(),
+  magic: z.number().optional(),
+  agility: z.number().optional(),
+  defense: z.number().optional(),
+  gold: z.number().optional(),
+  unspentPoints: z.number().optional(),
+  currentLocationId: z.string().optional(),
+  equipment: z.object({
+    weapon: z.string().optional(),
+    armor: z.string().optional(),
+    helmet: z.string().optional(),
+    boots: z.string().optional(),
+    accessory: z.string().optional(),
+  }).optional(),
+  inventory: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    type: z.string(),
+    quantity: z.number(),
+    icon: z.string(),
+  })).optional(),
+});
+
+export const moveCharacterSchema = z.object({
+  locationId: z.string(),
+});
+
+export const combatActionSchema = z.object({
+  action: z.enum(["attack", "defend", "magic", "flee"]),
+});
+
+export const useItemSchema = z.object({
+  itemId: z.string(),
+});
+
+export const equipItemSchema = z.object({
+  itemId: z.string(),
+  slot: z.enum(["weapon", "armor", "helmet", "boots", "accessory"]),
+});
+
 // Game action schemas
 export const moveCharacterSchema = z.object({
   locationId: z.string(),
