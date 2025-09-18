@@ -164,20 +164,4 @@ export const equipItemSchema = z.object({
   slot: z.enum(["weapon", "armor", "helmet", "boots", "accessory"]),
 });
 
-// Game action schemas
-export const moveCharacterSchema = z.object({
-  locationId: z.string(),
-});
 
-export const combatActionSchema = z.object({
-  action: z.enum(["attack", "defend", "magic", "flee"]),
-});
-
-export const useItemSchema = z.object({
-  itemId: z.string(),
-});
-
-export const equipItemSchema = z.object({
-  itemId: z.string(),
-  slot: z.enum(["weapon", "armor", "helmet", "boots", "accessory"]),
-});
