@@ -16,8 +16,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  # If you later need to force production mode during build uncomment below:
-  # NODE_ENV = "production"
+  NODE_ENV = "production"
 
 # SPA fallback so client-side routing works (wouter / React router style)
 [[redirects]]
