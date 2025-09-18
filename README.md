@@ -95,3 +95,34 @@ Currently the Express server remains separate (not deployed to Netlify). To migr
 
 ---
 For any additions, follow the established patterns in `shared/` for reusable logic.
+
+## Environment Variables
+
+For Netlify deployment, set these environment variables in your Netlify dashboard:
+
+### Required
+- `SESSION_SECRET` - Random secret for sessions
+- `FIREBASE_API_KEY` - Your Firebase API key
+- `FIREBASE_AUTH_DOMAIN` - Your Firebase auth domain
+- `FIREBASE_PROJECT_ID` - Your Firebase project ID
+- `FIREBASE_STORAGE_BUCKET` - Your Firebase storage bucket
+- `FIREBASE_MESSAGING_SENDER_ID` - Your Firebase messaging sender ID
+- `FIREBASE_APP_ID` - Your Firebase app ID
+
+### Development
+Copy `.env.example` to `.env` and fill in your values for local development.
+
+## Health Checks
+
+The API includes health check endpoints:
+- `GET /api/health` - Basic health status with platform info
+- `GET /api/ready` - Readiness check with service status
+
+## Features
+
+✅ **In-Memory Storage** - Fast game state management (resets on serverless cold starts)
+✅ **Firebase Integration** - Ready for authentication and additional services
+✅ **CORS Configuration** - Automatically handles Netlify URLs and deploy previews
+✅ **Rate Limiting** - Serverless-friendly API protection
+✅ **Error Handling** - Centralized error management with Zod validation
+✅ **Testing** - Jest tests for both server and Netlify functions
