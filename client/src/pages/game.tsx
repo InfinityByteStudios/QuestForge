@@ -15,21 +15,48 @@ import { GooglePixelIcon, GithubPixelIcon } from '@/components/PixelIcons';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/queryClient';
 import { getUserCharacterSnapshot, getUserLastCharacterId, saveUserCharacter } from '@/lib/firebase';
+import { getUserLastCharacterIdFirestore, saveUserCharacterFirestore } from '@/lib/firestore-questforge';
 import { saveUserCharacterFirestore, getUserLastCharacterIdFirestore, getUserCharacterSnapshotFirestore } from '@/lib/firestore-saves';
 
 export default function GamePage() {
   const { state, dispatch, addToActionLog } = useGame();
   const { user, signInGoogle, signInGithub, signInAnonymous, signOut } = useAuth();
 
-  // Check for saved character on load
+  // Auto-load character when user is signed in or check local storage
   useEffect(() => {
-    const savedCharacterId = localStorage.getItem('adventureQuestCharacter');
-    if (savedCharacterId) {
-      dispatch({ type: 'SET_CHARACTER_ID', payload: savedCharacterId });
-    } else {
-      dispatch({ type: 'TOGGLE_CHARACTER_CREATION' });
-    }
-  }, [dispatch]);
+    const autoLoadCharacter = async () => {
+      // If user is signed in, try to load their character automatically
+      if (user) {
+        try {
+          // Try to get cloud character ID first
+          let cloudCharacterId: string | null = null;
+          try {
+            cloudCharacterId = await getUserLastCharacterIdFirestore(user.uid);
+          } catch {
+            cloudCharacterId = await getUserLastCharacterId(user.uid);
+          }
+          
+          if (cloudCharacterId) {
+            dispatch({ type: 'SET_CHARACTER_ID', payload: cloudCharacterId });
+            localStorage.setItem('adventureQuestCharacter', cloudCharacterId);
+            return;
+          }
+        } catch (error) {
+          console.log('Could not load cloud character, checking local storage');
+        }
+      }
+      
+      // Fallback to local storage
+      const savedCharacterId = localStorage.getItem('adventureQuestCharacter');
+      if (savedCharacterId) {
+        dispatch({ type: 'SET_CHARACTER_ID', payload: savedCharacterId });
+      } else {
+        dispatch({ type: 'TOGGLE_CHARACTER_CREATION' });
+      }
+    };
+
+    autoLoadCharacter();
+  }, [dispatch, user]);
 
   const { data: character } = useQuery<Character>({
     queryKey: ['/api/characters', state.characterId],
