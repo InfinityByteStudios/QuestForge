@@ -93,7 +93,8 @@ export function CharacterStats() {
           <div className="pixel-border bg-background h-3">
             <div 
               className="health-bar h-full" 
-              style={{ '--health-percent': `${healthPercent}%` } as React.CSSProperties}
+              style={{ '--health-percent': `${Math.round(healthPercent)}%` } as React.CSSProperties}
+              title={`Health: ${Math.round(healthPercent)}%`}
             />
           </div>
         </div>
@@ -107,7 +108,8 @@ export function CharacterStats() {
           <div className="pixel-border bg-background h-3">
             <div 
               className="exp-bar h-full" 
-              style={{ '--exp-percent': `${expPercent}%` } as React.CSSProperties}
+              style={{ '--exp-percent': `${Math.round(expPercent)}%` } as React.CSSProperties}
+              title={`Experience: ${Math.round(expPercent)}%`}
             />
           </div>
           {unspentPoints > 0 && (

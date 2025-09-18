@@ -109,11 +109,21 @@
   }
 
   .health-bar {
-    background: linear-gradient(90deg, hsl(var(--health)) 0%, hsl(var(--health)) var(--health-percent), transparent var(--health-percent));
+    background: linear-gradient(90deg, 
+      hsl(var(--health)) 0%, 
+      hsl(var(--health)) var(--health-percent, 0%), 
+      hsl(var(--muted)) var(--health-percent, 0%)
+    );
+    transition: all 0.3s ease;
   }
 
   .exp-bar {
-    background: linear-gradient(90deg, hsl(var(--accent)) 0%, hsl(var(--accent)) var(--exp-percent), transparent var(--exp-percent));
+    background: linear-gradient(90deg, 
+      hsl(var(--accent)) 0%, 
+      hsl(var(--accent)) var(--exp-percent, 0%), 
+      hsl(var(--muted)) var(--exp-percent, 0%)
+    );
+    transition: all 0.3s ease;
   }
 
   .game-grid {
