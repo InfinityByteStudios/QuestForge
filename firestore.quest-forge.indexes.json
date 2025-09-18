@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "characters",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "level", "order": "DESCENDING" },
+        { "fieldPath": "experience", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "characters",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "currentLocationId", "order": "ASCENDING" },
+        { "fieldPath": "level", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

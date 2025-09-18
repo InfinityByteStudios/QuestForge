@@ -10,10 +10,16 @@ import { ShopPanel } from '@/components/ShopPanel';
 import { Inventory } from '@/components/Inventory';
 import { ActionLog } from '@/components/ActionLog';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { GooglePixelIcon, GithubPixelIcon } from '@/components/PixelIcons';
+import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/queryClient';
+import { getUserCharacterSnapshot, getUserLastCharacterId, saveUserCharacter } from '@/lib/firebase';
+import { saveUserCharacterFirestore, getUserLastCharacterIdFirestore, getUserCharacterSnapshotFirestore } from '@/lib/firestore-saves';
 
 export default function GamePage() {
   const { state, dispatch, addToActionLog } = useGame();
+  const { user, signInGoogle, signInGithub, signInAnonymous, signOut } = useAuth();
 
   // Check for saved character on load
   useEffect(() => {
@@ -39,24 +45,60 @@ export default function GamePage() {
         if (character) {
           // Persist a snapshot for rebuilds (serverless cold starts)
           localStorage.setItem('adventureQuestCharacterSnapshot', JSON.stringify(character));
+          // If signed in, also save to cloud
+          if (user) {
+            // async IIFE so we can await inside a sync setInterval callback
+            (async () => {
+              try {
+                await saveUserCharacterFirestore(user.uid, state.characterId!, character);
+              } catch (e) {
+                // Fall back to RTDB
+                saveUserCharacter(user.uid, state.characterId!, character).catch(() => {});
+              }
+            })();
+          }
         }
       } catch {}
     }, 30000);
     return () => clearInterval(interval);
-  }, [state.characterId, character]);
+  }, [state.characterId, character, user]);
 
   const handleSave = () => {
     if (state.characterId) {
       localStorage.setItem('adventureQuestCharacter', state.characterId);
-      if (character) {
+        if (character) {
         localStorage.setItem('adventureQuestCharacterSnapshot', JSON.stringify(character));
+        if (user) {
+          // Try Firestore first, fall back to RTDB
+          (async () => {
+            try {
+              await saveUserCharacterFirestore(user.uid, state.characterId!, character);
+            } catch (e) {
+              saveUserCharacter(user.uid, state.characterId!, character).catch(() => {});
+            }
+          })();
+        }
       }
       addToActionLog('Game saved!', 'success');
     }
   };
 
   const handleLoad = async () => {
-    const savedCharacterId = localStorage.getItem('adventureQuestCharacter');
+    // If signed in, try cloud last id but gracefully fall back to local on any error
+    let savedCharacterId: string | null = localStorage.getItem('adventureQuestCharacter');
+    if (user) {
+      try {
+        const cloudId = await getUserLastCharacterIdFirestore(user.uid);
+        if (cloudId) savedCharacterId = cloudId;
+      } catch (err) {
+        try {
+          const cloudId = await getUserLastCharacterId(user.uid);
+          if (cloudId) savedCharacterId = cloudId;
+        } catch (e) {
+          addToActionLog('Cloud save unavailable; using local save.', 'info');
+        }
+      }
+    }
     if (!savedCharacterId) {
       addToActionLog('No saved game found!', 'error');
       return;
@@ -71,13 +113,18 @@ export default function GamePage() {
       }
       // If missing (404), attempt restore from snapshot
       if (resp.status === 404) {
-        const snapStr = localStorage.getItem('adventureQuestCharacterSnapshot');
-        if (!snapStr) {
+        // Try cloud snapshot first if signed in
+        let snap: Partial<Character> | null = null;
+        if (user) {
+          snap = (await getUserCharacterSnapshot(user.uid, savedCharacterId)) as any;
+        }
+        const snapStr = !snap ? localStorage.getItem('adventureQuestCharacterSnapshot') : null;
+        if (!snap && !snapStr) {
           addToActionLog('Save not found on server and no snapshot to restore.', 'error');
           return;
         }
-        const snap = JSON.parse(snapStr) as Partial<Character>;
-        if (!snap.name || !snap.class) {
+        if (!snap && snapStr) snap = JSON.parse(snapStr) as Partial<Character>;
+        if (!snap || !snap.name || !snap.class) {
           addToActionLog('Snapshot incomplete; cannot restore.', 'error');
           return;
         }
@@ -119,13 +166,18 @@ export default function GamePage() {
       }
     } catch (e) {
       // Network or other error; try snapshot regardless
-      const snapStr = localStorage.getItem('adventureQuestCharacterSnapshot');
-      if (!snapStr) {
+      // Try cloud snapshot first if signed in
+      let snap: Partial<Character> | null = null;
+      if (user && savedCharacterId) {
+        try { snap = (await getUserCharacterSnapshot(user.uid, savedCharacterId)) as any; } catch {}
+      }
+      const snapStr = !snap ? localStorage.getItem('adventureQuestCharacterSnapshot') : null;
+      if (!snap && !snapStr) {
         addToActionLog('Load failed and no snapshot available.', 'error');
         return;
       }
-      const snap = JSON.parse(snapStr) as Partial<Character>;
-      if (!snap.name || !snap.class) {
+      if (!snap && snapStr) snap = JSON.parse(snapStr) as Partial<Character>;
+      if (!snap || !snap.name || !snap.class) {
         addToActionLog('Snapshot incomplete; cannot restore.', 'error');
         return;
       }
@@ -182,7 +234,40 @@ export default function GamePage() {
               </div>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {/* Auth controls */}
+            <div className="flex items-center gap-2 text-xs">
+              {user ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">{user.isAnonymous ? 'Guest' : (user.displayName || user.email)}</span>
+                  <Button className="pixel-button pixel-border bg-secondary text-secondary-foreground px-2 py-1 text-[10px]" onClick={() => signOut()}>
+                    Sign out
+                  </Button>
+                </div>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="pixel-button pixel-border bg-secondary text-secondary-foreground px-3 py-1 text-xs">
+                      Sign in
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-[160px]">
+                    <DropdownMenuItem onClick={() => signInGoogle()} className="flex items-center gap-2">
+                      <GooglePixelIcon />
+                      <span>Continue with Google</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => signInGithub()} className="flex items-center gap-2">
+                      <GithubPixelIcon />
+                      <span>Continue with GitHub</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => signInAnonymous()} className="flex items-center gap-2">
+                      <span className="w-[14px] h-[14px] bg-foreground inline-block" />
+                      <span>Continue as Guest</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
             <Button
               className="pixel-button pixel-border bg-primary text-primary-foreground px-3 py-1 text-xs"
               onClick={handleSave}

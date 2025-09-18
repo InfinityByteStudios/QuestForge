@@ -1,0 +1,18 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "firestoreDatabases": [
+    {
+      "database": "(default)",
+      "rules": "firestore.rules",
+      "indexes": "firestore.indexes.json"
+    },
+    {
+      "database": "quest-forge",
+      "rules": "firestore.quest-forge.rules",
+      "indexes": "firestore.quest-forge.indexes.json"
+    }
+  ]
+}

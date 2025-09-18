@@ -1,0 +1,35 @@
+{
+  "rules": {
+    "quest-forge": {
+      "users": {
+        "$uid": {
+          ".read": "$uid === auth.uid",
+          ".write": "$uid === auth.uid",
+          "lastCharacterId": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 64"
+          },
+          "characters": {
+            "$charId": {
+              ".validate": "newData.hasChildren(['name','class','level','experience','health','maxHealth','gold'])",
+              "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32" },
+              "class": { ".validate": "newData.isString() && newData.val().matches(/^[a-z_]+$/)" },
+              "level": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 999" },
+              "experience": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+              "health": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+              "maxHealth": { ".validate": "newData.isNumber() && newData.val() >= 1" },
+              "gold": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000" },
+              "unspentPoints": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 999" },
+              "strength": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 999" },
+              "magic": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 999" },
+              "agility": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 999" },
+              "defense": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 999" },
+              "currentLocationId": { ".validate": "newData.isString() && newData.val().matches(/^[a-z_]+$/)" },
+              "equipment": { ".validate": "newData.isObject()" },
+              "inventory": { ".validate": "newData.isArray() || newData.isObject()" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

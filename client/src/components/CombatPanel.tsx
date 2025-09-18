@@ -20,7 +20,6 @@ export function CombatPanel() {
   });
   
   // Debug logging
-  console.log('[CombatPanel] Combat data:', combat, 'Loading:', combatLoading, 'CharId:', state.characterId);
 
   const { data: enemy } = useQuery<Enemy>({
     queryKey: ['/api/enemies', combat?.enemyId],

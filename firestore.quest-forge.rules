@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function validString(field, max) { return field is string && field.size() > 0 && field.size() <= max; }
+    function validNumRange(field, min, max) { return field is number && field >= min && field <= max; }
+
+    // Namespace under quest-forge root
+    match /quest-forge/users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update, delete: if isOwner(userId) && isValidUserDoc(request.resource.data);
+
+      function isValidUserDoc(data) {
+        return (!('lastCharacterId' in data) || validString(data.lastCharacterId, 64));
+      }
+
+      match /characters/{charId} {
+        allow get, list: if isOwner(userId);
+        allow create, update, delete: if isOwner(userId) && isValidCharacter(request.resource.data);
+      }
+
+      function isValidCharacter(data) {
+        return data.keys().hasAll(['name','class','level','experience','health','maxHealth','gold'])
+          && validString(data.name, 32)
+          && (data.class is string && data.class.matches('^[a-z_]+$'))
+          && validNumRange(data.level, 1, 999)
+          && (data.experience is number && data.experience >= 0)
+          && (data.health is number && data.health >= 0)
+          && (data.maxHealth is number && data.maxHealth >= 1)
+          && validNumRange(data.gold, 0, 100000000)
+          && (!('unspentPoints' in data) || validNumRange(data.unspentPoints, 0, 999))
+          && (!('strength' in data) || validNumRange(data.strength, 0, 999))
+          && (!('magic' in data) || validNumRange(data.magic, 0, 999))
+          && (!('agility' in data) || validNumRange(data.agility, 0, 999))
+          && (!('defense' in data) || validNumRange(data.defense, 0, 999))
+          && (!('currentLocationId' in data) || (data.currentLocationId is string && data.currentLocationId.matches('^[a-z_]+$')))
+          && (!('equipment' in data) || data.equipment is map)
+          && (!('inventory' in data) || (data.inventory is list || data.inventory is map));
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
