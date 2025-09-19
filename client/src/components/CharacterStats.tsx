@@ -125,7 +125,6 @@ export function CharacterStats() {
             <span>HP</span>
             <span data-testid="text-health">{character.health}/{character.maxHealth}</span>
           </div>
-          <div className="text-[8px] text-muted-foreground">DEBUG: {Math.round(healthPercent)}%</div>
           <div className="pixel-border bg-background h-3">
             <div 
               className="health-bar h-full" 
@@ -141,7 +140,6 @@ export function CharacterStats() {
             <span>EXP</span>
             <span data-testid="text-experience">{expInLevel}/{expForNextLevel}</span>
           </div>
-          <div className="text-[8px] text-muted-foreground">DEBUG: {Math.round(expPercent)}%</div>
           <div className="pixel-border bg-background h-3">
             <div 
               className="exp-bar h-full" 
@@ -260,18 +258,18 @@ export function CharacterStats() {
             <Button
               size="sm"
               className="pixel-button pixel-border bg-muted text-foreground py-1 text-[10px]"
-              onClick={() => adjustExpMutation.mutate(-50)}
+              onClick={() => adjustExpMutation.mutate(-20)}
               disabled={adjustExpMutation.isPending || character.experience <= 0}
             >
-              EXP -50
+              EXP -20
             </Button>
             <Button
               size="sm"
               className="pixel-button pixel-border bg-accent text-accent-foreground py-1 text-[10px]"
-              onClick={() => adjustExpMutation.mutate(100)}
+              onClick={() => adjustExpMutation.mutate(30)}
               disabled={adjustExpMutation.isPending}
             >
-              EXP +100
+              EXP +30
             </Button>
           </div>
         </div>
