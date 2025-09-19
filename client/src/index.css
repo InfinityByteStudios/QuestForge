@@ -109,39 +109,41 @@
   }
 
   .health-bar {
+    background: #2F4F4F; /* fallback grey */
     position: relative;
-    background: hsl(var(--muted));
     overflow: hidden;
     transition: all 0.3s ease;
   }
 
-  .health-bar::before {
+  .health-bar::after {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     height: 100%;
     width: var(--health-percent, 0%);
-    background: hsl(var(--health));
+    background: #DC143C; /* crimson red */
     transition: width 0.3s ease;
+    z-index: 1;
   }
 
   .exp-bar {
+    background: #2F4F4F; /* fallback grey */
     position: relative;
-    background: hsl(var(--muted));
     overflow: hidden;
     transition: all 0.3s ease;
   }
 
-  .exp-bar::before {
+  .exp-bar::after {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     height: 100%;
     width: var(--exp-percent, 0%);
-    background: hsl(var(--accent));
+    background: #FFD700; /* gold */
     transition: width 0.3s ease;
+    z-index: 1;
   }
 
   .game-grid {

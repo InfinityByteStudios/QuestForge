@@ -125,6 +125,7 @@ export function CharacterStats() {
             <span>HP</span>
             <span data-testid="text-health">{character.health}/{character.maxHealth}</span>
           </div>
+          <div className="text-[8px] text-muted-foreground">DEBUG: {Math.round(healthPercent)}%</div>
           <div className="pixel-border bg-background h-3">
             <div 
               className="health-bar h-full" 
@@ -140,6 +141,7 @@ export function CharacterStats() {
             <span>EXP</span>
             <span data-testid="text-experience">{expInLevel}/{expForNextLevel}</span>
           </div>
+          <div className="text-[8px] text-muted-foreground">DEBUG: {Math.round(expPercent)}%</div>
           <div className="pixel-border bg-background h-3">
             <div 
               className="exp-bar h-full" 
