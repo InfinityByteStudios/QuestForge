@@ -109,21 +109,39 @@
   }
 
   .health-bar {
-    background: linear-gradient(90deg, 
-      hsl(var(--health)) 0%, 
-      hsl(var(--health)) var(--health-percent, 0%), 
-      hsl(var(--muted)) var(--health-percent, 0%)
-    );
+    position: relative;
+    background: hsl(var(--muted));
+    overflow: hidden;
     transition: all 0.3s ease;
   }
 
+  .health-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--health-percent, 0%);
+    background: hsl(var(--health));
+    transition: width 0.3s ease;
+  }
+
   .exp-bar {
-    background: linear-gradient(90deg, 
-      hsl(var(--accent)) 0%, 
-      hsl(var(--accent)) var(--exp-percent, 0%), 
-      hsl(var(--muted)) var(--exp-percent, 0%)
-    );
+    position: relative;
+    background: hsl(var(--muted));
+    overflow: hidden;
     transition: all 0.3s ease;
+  }
+
+  .exp-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--exp-percent, 0%);
+    background: hsl(var(--accent));
+    transition: width 0.3s ease;
   }
 
   .game-grid {
