@@ -31,40 +31,6 @@ export function CharacterStats() {
     }
   });
 
-  const adjustHealthMutation = useMutation({
-    mutationFn: async (amount: number) => {
-      if (!character) return;
-      const newHealth = Math.max(0, Math.min(character.maxHealth, character.health + amount));
-      const response = await apiRequest('PATCH', `/api/characters/${character.id}`, {
-        health: newHealth
-      });
-      return response.json();
-    },
-    onSuccess: (updatedCharacter) => {
-      if (updatedCharacter && character) {
-        queryClient.setQueryData(['/api/characters', character.id], updatedCharacter);
-        addToActionLog(`Health ${updatedCharacter.health > character.health ? 'restored' : 'reduced'}!`, 'info');
-      }
-    }
-  });
-
-  const adjustExpMutation = useMutation({
-    mutationFn: async (amount: number) => {
-      if (!character) return;
-      const newExp = Math.max(0, character.experience + amount);
-      const response = await apiRequest('PATCH', `/api/characters/${character.id}`, {
-        experience: newExp
-      });
-      return response.json();
-    },
-    onSuccess: (updatedCharacter) => {
-      if (updatedCharacter && character) {
-        queryClient.setQueryData(['/api/characters', character.id], updatedCharacter);
-        const expGained = updatedCharacter.experience - character.experience;
-        addToActionLog(`Gained ${expGained} experience!`, 'success');
-      }
-    }
-  });
 
   if (isLoading || !character) {
     return (
@@ -233,47 +199,6 @@ export function CharacterStats() {
           </div>
         </div>
         
-        {/* Bar Animation Test Controls */}
-        <div className="mt-3 pt-2 border-t border-border">
-          <div className="text-xs text-accent mb-2">BAR TEST</div>
-          <div className="grid grid-cols-2 gap-1 mb-2">
-            <Button
-              size="sm"
-              className="pixel-button pixel-border bg-destructive text-foreground py-1 text-[10px]"
-              onClick={() => adjustHealthMutation.mutate(-10)}
-              disabled={adjustHealthMutation.isPending || character.health <= 0}
-            >
-              HP -10
-            </Button>
-            <Button
-              size="sm"
-              className="pixel-button pixel-border bg-secondary text-foreground py-1 text-[10px]"
-              onClick={() => adjustHealthMutation.mutate(10)}
-              disabled={adjustHealthMutation.isPending || character.health >= character.maxHealth}
-            >
-              HP +10
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-1">
-            <Button
-              size="sm"
-              className="pixel-button pixel-border bg-muted text-foreground py-1 text-[10px]"
-              onClick={() => adjustExpMutation.mutate(-20)}
-              disabled={adjustExpMutation.isPending || character.experience <= 0}
-            >
-              EXP -20
-            </Button>
-            <Button
-              size="sm"
-              className="pixel-button pixel-border bg-accent text-accent-foreground py-1 text-[10px]"
-              onClick={() => adjustExpMutation.mutate(30)}
-              disabled={adjustExpMutation.isPending}
-            >
-              EXP +30
-            </Button>
-          </div>
-        </div>
-
         {/* Debug Controls */}
         {import.meta.env.MODE !== 'production' && new URLSearchParams(window.location.search).has('debug') && (
           <div className="mt-3 pt-2 border-t border-border">
