@@ -109,21 +109,41 @@
   }
 
   .health-bar {
-    background: linear-gradient(90deg, 
-      hsl(var(--health)) 0%, 
-      hsl(var(--health)) var(--health-percent, 0%), 
-      hsl(var(--muted)) var(--health-percent, 0%)
-    );
+    background: #2F4F4F; /* fallback grey */
+    position: relative;
+    overflow: hidden;
     transition: all 0.3s ease;
   }
 
+  .health-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--health-percent, 0%);
+    background: #DC143C; /* crimson red */
+    transition: width 0.3s ease;
+    z-index: 1;
+  }
+
   .exp-bar {
-    background: linear-gradient(90deg, 
-      hsl(var(--accent)) 0%, 
-      hsl(var(--accent)) var(--exp-percent, 0%), 
-      hsl(var(--muted)) var(--exp-percent, 0%)
-    );
+    background: #2F4F4F; /* fallback grey */
+    position: relative;
+    overflow: hidden;
     transition: all 0.3s ease;
+  }
+
+  .exp-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--exp-percent, 0%);
+    background: #FFD700; /* gold */
+    transition: width 0.3s ease;
+    z-index: 1;
   }
 
   .game-grid {

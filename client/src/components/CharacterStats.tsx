@@ -31,6 +31,7 @@ export function CharacterStats() {
     }
   });
 
+
   if (isLoading || !character) {
     return (
       <div className="pixel-border bg-card p-3">

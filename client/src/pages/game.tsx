@@ -15,8 +15,7 @@ import { GooglePixelIcon, GithubPixelIcon } from '@/components/PixelIcons';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/queryClient';
 import { getUserCharacterSnapshot, getUserLastCharacterId, saveUserCharacter } from '@/lib/firebase';
-import { getUserLastCharacterIdFirestore, saveUserCharacterFirestore } from '@/lib/firestore-questforge';
-import { saveUserCharacterFirestore, getUserLastCharacterIdFirestore, getUserCharacterSnapshotFirestore } from '@/lib/firestore-saves';
+import { getUserLastCharacterIdFirestore, saveUserCharacterFirestore, getUserCharacterSnapshotFirestore } from '@/lib/firestore-saves';
 
 export default function GamePage() {
   const { state, dispatch, addToActionLog } = useGame();
