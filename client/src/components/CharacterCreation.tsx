@@ -73,6 +73,13 @@ export function CharacterCreation() {
     createCharacterMutation.mutate({
       name: name.trim(),
       class: selectedClass,
+      level: 1,
+      experience: 0,
+      gold: 0,
+      unspentPoints: 0,
+      currentLocationId: 'starting_village',
+      equipment: {},
+      inventory: [],
       ...finalStats
     });
   };

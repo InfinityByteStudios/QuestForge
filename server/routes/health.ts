@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../middleware/errorHandler.js';
 
 const router = Router();
 
-router.get('/health', asyncHandler(async (req, res) => {
+router.get('/health', asyncHandler(async (req: Request, res: Response) => {
   const healthCheck = {
     status: 'OK',
     timestamp: new Date().toISOString(),
@@ -18,7 +18,7 @@ router.get('/health', asyncHandler(async (req, res) => {
   res.status(200).json(healthCheck);
 }));
 
-router.get('/ready', asyncHandler(async (req, res) => {
+router.get('/ready', asyncHandler(async (req: Request, res: Response) => {
   const checks = {
     storage: 'in-memory',
     firebase: process.env.FIREBASE_PROJECT_ID ? 'configured' : 'not-configured',

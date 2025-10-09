@@ -15,7 +15,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Character routes
   app.post("/api/characters", async (req, res) => {
     try {
-      const characterData = insertCharacterSchema.parse(req.body);
+      const parsed = insertCharacterSchema.parse(req.body);
+      const characterData = {
+        name: parsed.name,
+        class: parsed.class,
+        level: parsed.level ?? 1,
+        experience: parsed.experience ?? 0,
+        health: parsed.health ?? 100,
+        maxHealth: parsed.maxHealth ?? 100,
+        strength: parsed.strength ?? 10,
+        magic: parsed.magic ?? 10,
+        agility: parsed.agility ?? 10,
+        defense: parsed.defense ?? 10,
+        gold: parsed.gold ?? 0,
+        unspentPoints: parsed.unspentPoints ?? 0,
+        currentLocationId: parsed.currentLocationId ?? 'starting_village',
+        equipment: parsed.equipment ?? {},
+        inventory: parsed.inventory ?? []
+      };
       const character = await storage.createCharacter(characterData);
       res.json(character);
     } catch (error: any) {
@@ -108,7 +125,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const characterQuest = await storage.createCharacterQuest({
         characterId: req.params.id,
-        questId: req.body.questId
+        questId: req.body.questId,
+        progress: 0,
+        completed: false,
+        active: true
       });
       res.json(characterQuest);
     } catch (error: any) {
@@ -204,7 +224,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const combat = await storage.createCombatSession({
         characterId: req.params.id,
         enemyId,
-        enemyHealth: startingEnemyHealth
+        enemyHealth: startingEnemyHealth,
+        active: true,
+        turn: 'player'
       });
       res.json(combat);
     } catch (error: any) {
