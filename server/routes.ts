@@ -136,6 +136,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/characters/:id/quests/:questId", async (req, res) => {
+    try {
+      await storage.deleteCharacterQuest(req.params.questId);
+      res.json({ message: "Quest abandoned successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Combat routes
   app.get("/api/characters/:id/combat", async (req, res) => {
     try {

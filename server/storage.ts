@@ -36,6 +36,7 @@ export interface IStorage {
   getCharacterQuests(characterId: string): Promise<CharacterQuest[]>;
   createCharacterQuest(characterQuest: InsertCharacterQuest): Promise<CharacterQuest>;
   updateCharacterQuest(id: string, updates: Partial<CharacterQuest>): Promise<CharacterQuest>;
+  deleteCharacterQuest(id: string): Promise<void>;
   
   // Enemy operations
   getEnemy(id: string): Promise<Enemy | undefined>;
@@ -44,7 +45,7 @@ export interface IStorage {
   // Combat operations
   getCombatSession(characterId: string): Promise<CombatSession | undefined>;
   createCombatSession(session: InsertCombatSession): Promise<CombatSession>;
-  updateCombatSession(id: string, updates: Partial<CombatSession>): Promise<CombatSession>;
+  updateCombatSession(id: string, updates: Partial<CharacterQuest>): Promise<CombatSession>;
   deleteCombatSession(id: string): Promise<void>;
   
   // Item operations
@@ -313,7 +314,7 @@ export class MemStorage implements IStorage {
       {
         id: "goblin_problem",
         title: "Goblin Problem",
-        description: "The village elder asks you to defeat forest goblins",
+        description: "The village elder asks you to defeat forest goblins threatening travelers",
         type: "kill",
         target: "goblin",
         targetAmount: 5,
@@ -321,14 +322,54 @@ export class MemStorage implements IStorage {
         locationId: "village"
       },
       {
-        id: "herb_gathering",
-        title: "Herb Gathering",
-        description: "Collect healing herbs for the village healer",
-        type: "collect",
-        target: "herb",
-        targetAmount: 10,
-        reward: { experience: 100, items: [{ id: "magic_scroll", quantity: 1 }] },
+        id: "wolf_menace",
+        title: "Wolf Menace",
+        description: "Wolves have been spotted near the village. Help protect the livestock!",
+        type: "kill",
+        target: "wolf",
+        targetAmount: 3,
+        reward: { experience: 150, gold: 30 },
         locationId: "village"
+      },
+      {
+        id: "bandit_threat",
+        title: "Bandit Threat",
+        description: "Bandits are raiding merchants on the road. Put an end to their crimes!",
+        type: "kill",
+        target: "bandit",
+        targetAmount: 4,
+        reward: { experience: 300, gold: 100, items: [{ id: "iron_sword", quantity: 1 }] },
+        locationId: "village"
+      },
+      {
+        id: "training_basics",
+        title: "Training Basics",
+        description: "The village trainer wants you to practice combat. Use the training dummy!",
+        type: "kill",
+        target: "training_dummy",
+        targetAmount: 1,
+        reward: { experience: 50, gold: 10 },
+        locationId: "training_grounds"
+      },
+      {
+        id: "combat_mastery",
+        title: "Combat Mastery",
+        description: "Prove your worth by defeating the training dummy 10 times",
+        type: "kill",
+        target: "training_dummy",
+        targetAmount: 10,
+        reward: { experience: 500, gold: 75, items: [{ id: "steel_sword", quantity: 1 }] },
+        locationId: "training_grounds"
+      },
+      {
+        id: "forest_patrol",
+        title: "Forest Patrol",
+        description: "The forest has become dangerous. Clear out any threats you find!",
+        type: "kill",
+        target: "goblin",
+        targetAmount: 10,
+        reward: { experience: 400, gold: 120 },
+        locationId: "forest"
       }
     ];
     
@@ -435,6 +476,10 @@ export class MemStorage implements IStorage {
     const updated = { ...quest, ...updates };
     this.characterQuests.set(id, updated);
     return updated;
+  }
+
+  async deleteCharacterQuest(id: string): Promise<void> {
+    this.characterQuests.delete(id);
   }
 
   // Enemy operations

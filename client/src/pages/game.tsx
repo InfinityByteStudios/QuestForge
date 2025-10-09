@@ -9,6 +9,7 @@ import { CombatPanel } from '@/components/CombatPanel';
 import { ShopPanel } from '@/components/ShopPanel';
 import { Inventory } from '@/components/Inventory';
 import { ActionLog } from '@/components/ActionLog';
+import { QuestPanel } from '@/components/QuestPanel';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { GooglePixelIcon, GithubPixelIcon } from '@/components/PixelIcons';
@@ -380,9 +381,7 @@ export default function GamePage() {
               </div>
             )}
             {state.currentView === 'quests' && (
-              <div className="text-center text-xs py-8">
-                Quest system coming soon!
-              </div>
+              <QuestPanel characterId={state.characterId!} />
             )}
           </main>
 
@@ -390,13 +389,6 @@ export default function GamePage() {
           <aside style={{ gridArea: 'right-panel' }} className="space-y-2">
             <CombatPanel />
             {(['village_shop','dark_forest_shop','ruins_shop','forest','ruins'].includes(character.currentLocationId)) && <ShopPanel />}
-            {/* Quest Panel Placeholder */}
-            <div className="pixel-border bg-card p-3">
-              <h2 className="text-accent text-xs mb-3">ACTIVE QUESTS</h2>
-              <div className="text-xs text-center text-muted-foreground">
-                Quest system coming soon!
-              </div>
-            </div>
           </aside>
 
           {/* Bottom Panel - Action Log */}
